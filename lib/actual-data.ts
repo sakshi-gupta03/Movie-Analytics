@@ -168,7 +168,7 @@ export const chains: Chain[] = [
     screens: 4,
   },
 
-  // Gujarat theaters
+  // Gujarat theater
   {
     id: "rahans-vastral",
     name: "RAHANS VASTRAL",
