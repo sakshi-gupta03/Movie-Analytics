@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,7 +28,7 @@ import {
   Download,
   FileText,
   CheckCircle,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   ChevronUp,
   ChevronDown,
@@ -37,11 +37,11 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Eye,
+  Upload,
 } from "lucide-react"
 import { generateDCRData } from "@/lib/actual-data"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api"
+import { useToast } from "@/components/ui/use-toast"
 
 interface InvoiceData {
   id: string
@@ -62,8 +62,8 @@ interface InvoiceData {
   share: number
   gst: number
   finalShare: number
-  invoiceGenerated: boolean
-  invoiceSent: boolean
+  invoiceGenerated: boolean // Keep for internal logic/content generation
+  fileUploaded: boolean // New: indicates if a file has been uploaded for this invoice
   collectionReceived: boolean
   invoiceNumber?: string
   invoiceDate?: string
@@ -102,8 +102,8 @@ const generateInvoiceData = (): InvoiceData[] => {
       share,
       gst,
       finalShare,
-      invoiceGenerated: Math.random() > 0.3,
-      invoiceSent: Math.random() > 0.5,
+      invoiceGenerated: Math.random() > 0.3, // Still generate invoice content internally
+      fileUploaded: Math.random() > 0.5, // New property
       collectionReceived: Math.random() > 0.6,
       invoiceNumber: `INV-2024-${String(index + 1).padStart(4, "0")}`,
       invoiceDate: new Date(2024, 0, 15 + Math.floor(index / 10)).toLocaleDateString(),
@@ -194,6 +194,7 @@ export function Invoicing() {
   const [selectedTheaterFilter, setSelectedTheaterFilter] = useState("All Theaters")
   const [selectedWeek, setSelectedWeek] = useState("All Weeks")
   const [invoiceData, setInvoiceData] = useState<InvoiceData[]>(generateInvoiceData())
+  const { toast } = useToast()
 
   // Map state
   const [selectedTheaterMarker, setSelectedTheaterMarker] = useState<string | null>(null)
@@ -207,6 +208,9 @@ export function Invoicing() {
   // Sorting state
   const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>(null)
+
+  // Refs for file inputs
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
 
   // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
@@ -300,9 +304,9 @@ export function Invoicing() {
   const goToLastPage = () => setCurrentPage(totalPages)
   const goToPage = (page: number) => setCurrentPage(Math.max(1, Math.min(totalPages, page)))
 
-  // Generate invoice template
-  const generateInvoice = (item: InvoiceData) => {
-    const invoiceTemplate = `
+  // Generate invoice template (kept for internal content generation)
+  const generateInvoiceContent = (item: InvoiceData) => {
+    return `
 INVOICE
 
 Invoice Number: ${item.invoiceNumber}
@@ -331,29 +335,31 @@ Final Amount: ₹${item.finalShare.toLocaleString()}
 
 Terms: ${item.terms}
   `
-
-    // Create and download the invoice
-    const blob = new Blob([invoiceTemplate], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${item.invoiceNumber}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    // Update invoice status and store content
-    setInvoiceData((prev) =>
-      prev.map((invoice) =>
-        invoice.id === item.id ? { ...invoice, invoiceGenerated: true, invoiceContent: invoiceTemplate } : invoice,
-      ),
-    )
   }
 
-  // Toggle invoice sent status
-  const toggleInvoiceSent = (id: string, sent: boolean) => {
-    setInvoiceData((prev) => prev.map((invoice) => (invoice.id === id ? { ...invoice, invoiceSent: sent } : invoice)))
+  // Handle file upload
+  const handleFileUpload = (invoiceId: string, file: File | null) => {
+    if (file) {
+      console.log(`Uploading file for invoice ${invoiceId}:`, file.name)
+      // Simulate upload process
+      setTimeout(() => {
+        setInvoiceData((prev) =>
+          prev.map((invoice) => (invoice.id === invoiceId ? { ...invoice, fileUploaded: true } : invoice)),
+        )
+        toast({
+          title: "File Uploaded & Sent!",
+          description: `Invoice ${invoiceId} - ${file.name} has been successfully uploaded and sent.`,
+          duration: 3000,
+        })
+      }, 1000)
+    } else {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload.",
+        variant: "destructive",
+        duration: 3000,
+      })
+    }
   }
 
   // Toggle collection status
@@ -382,8 +388,7 @@ Terms: ${item.terms}
         "Share",
         "GST",
         "Final Share",
-        "Invoice Generated",
-        "Invoice Sent",
+        "File Uploaded", // Changed from Invoice Generated
         "Collection",
       ].join(","),
       ...filteredAndSortedData.map((item) =>
@@ -403,8 +408,7 @@ Terms: ${item.terms}
           item.share,
           item.gst,
           item.finalShare,
-          item.invoiceGenerated ? "Yes" : "No",
-          item.invoiceSent ? "Yes" : "No",
+          item.fileUploaded ? "Yes" : "No", // Changed from invoiceGenerated
           item.collectionReceived ? "Yes" : "No",
         ].join(","),
       ),
@@ -423,8 +427,7 @@ Terms: ${item.terms}
 
   // Calculate overview metrics
   const totalInvoices = filteredAndSortedData.length
-  const invoicesGenerated = filteredAndSortedData.filter((item) => item.invoiceGenerated).length
-  const invoicesSent = filteredAndSortedData.filter((item) => item.invoiceSent).length
+  const filesUploaded = filteredAndSortedData.filter((item) => item.fileUploaded).length // Changed from invoicesGenerated
   const collectionsReceived = filteredAndSortedData.filter((item) => item.collectionReceived).length
   const totalAmount = filteredAndSortedData.reduce((sum, item) => sum + item.finalShare, 0)
   const collectedAmount = filteredAndSortedData
@@ -434,8 +437,7 @@ Terms: ${item.terms}
 
   // Chart data
   const invoiceStatusData = [
-    { name: "Generated", value: invoicesGenerated, color: "#10b981" },
-    { name: "Sent", value: invoicesSent, color: "#3b82f6" },
+    { name: "Uploaded", value: filesUploaded, color: "#10b981" }, // Changed from Generated
     { name: "Collected", value: collectionsReceived, color: "#f59e0b" },
     { name: "Pending", value: totalInvoices - collectionsReceived, color: "#ef4444" },
   ]
@@ -1053,9 +1055,9 @@ Terms: ${item.terms}
 
                         {/* Fixed Right Columns */}
                         <TableHead
-                          className="cursor-pointer select-none hover:bg-muted/50 sticky-right right-[300px] z-20 w-[130px]"
+                          className="cursor-pointer select-none hover:bg-muted/50 sticky-right right-[200px] z-20 w-[130px]"
                           onClick={() => handleSort("finalShare")}
-                          style={{ right: "300px" }}
+                          style={{ right: "200px" }}
                         >
                           <div className="flex items-center gap-2">
                             Final Share
@@ -1063,23 +1065,13 @@ Terms: ${item.terms}
                           </div>
                         </TableHead>
                         <TableHead
-                          className="cursor-pointer select-none hover:bg-muted/50 sticky-right right-[200px] z-20 w-[100px]"
-                          onClick={() => handleSort("invoiceGenerated")}
-                          style={{ right: "200px" }}
-                        >
-                          <div className="flex items-center gap-2">
-                            Generate
-                            {getSortIcon("invoiceGenerated")}
-                          </div>
-                        </TableHead>
-                        <TableHead
                           className="cursor-pointer select-none hover:bg-muted/50 sticky-right right-[100px] z-20 w-[100px]"
-                          onClick={() => handleSort("invoiceSent")}
+                          onClick={() => handleSort("fileUploaded")}
                           style={{ right: "100px" }}
                         >
                           <div className="flex items-center gap-2">
-                            Sent
-                            {getSortIcon("invoiceSent")}
+                            Upload
+                            {getSortIcon("fileUploaded")}
                           </div>
                         </TableHead>
                         <TableHead
@@ -1097,7 +1089,7 @@ Terms: ${item.terms}
                     <TableBody>
                       {paginatedData.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={18} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={17} className="text-center py-8 text-muted-foreground">
                             No data found matching your search criteria
                           </TableCell>
                         </TableRow>
@@ -1142,108 +1134,40 @@ Terms: ${item.terms}
 
                             {/* Fixed Right Columns */}
                             <TableCell
-                              className="text-right font-mono font-bold sticky-right right-[300px] z-10"
-                              style={{ right: "300px" }}
+                              className="text-right font-mono font-bold sticky-right right-[200px] z-10"
+                              style={{ right: "200px" }}
                             >
                               ₹{item.finalShare.toLocaleString()}
                             </TableCell>
-                            <TableCell className="sticky-right right-[200px] z-10" style={{ right: "200px" }}>
-                              {item.invoiceGenerated ? (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button size="sm" variant="outline" className="w-full bg-transparent">
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                    <DialogHeader>
-                                      <DialogTitle>Invoice - {item.invoiceNumber}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="mt-4">
-                                      <pre className="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-4 rounded-lg border">
-                                        {item.invoiceContent ||
-                                          `
-INVOICE
-
-Invoice Number: ${item.invoiceNumber}
-Invoice Date: ${item.invoiceDate}
-Due Date: ${item.dueDate}
-
-Bill To:
-${item.theatre}
-${item.station}
-${item.circuit}
-
-Controller: ${item.controllers}
-
-SERVICES:
-Screen Type: ${item.screenType}
-Shows: ${item.show}
-Audience: ${item.audience.toLocaleString()}
-
-FINANCIAL BREAKDOWN:
-Gross Amount: ₹${item.nettAmount.toLocaleString()}
-Less: Deduction: ₹${item.deduction.toLocaleString()}
-Net Amount: ₹${item.afterDeduction.toLocaleString()}
-Share (60%): ₹${item.share.toLocaleString()}
-GST (18%): ₹${item.gst.toLocaleString()}
-Final Amount: ₹${item.finalShare.toLocaleString()}
-
-Terms: ${item.terms}
-                                        `}
-                                      </pre>
-                                      <div className="mt-4 flex justify-end">
-                                        <Button
-                                          onClick={() => {
-                                            const content =
-                                              item.invoiceContent || `Invoice content for ${item.invoiceNumber}`
-                                            const blob = new Blob([content], { type: "text/plain" })
-                                            const url = URL.createObjectURL(blob)
-                                            const a = document.createElement("a")
-                                            a.href = url
-                                            a.download = `${item.invoiceNumber}.txt`
-                                            document.body.appendChild(a)
-                                            a.click()
-                                            document.body.removeChild(a)
-                                            URL.revokeObjectURL(url)
-                                          }}
-                                          size="sm"
-                                        >
-                                          <Download className="h-4 w-4 mr-2" />
-                                          Download
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                            <TableCell className="sticky-right right-[100px] z-10" style={{ right: "100px" }}>
+                              <input
+                                type="file"
+                                ref={(el) => (fileInputRefs.current[item.id] = el)}
+                                style={{ display: "none" }}
+                                onChange={(e) => handleFileUpload(item.id, e.target.files ? e.target.files[0] : null)}
+                              />
+                              {item.fileUploaded ? (
+                                <Button size="sm" variant="outline" className="w-full bg-transparent" disabled>
+                                  <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                                  Uploaded
+                                </Button>
                               ) : (
                                 <Button
-                                  onClick={() => generateInvoice(item)}
+                                  onClick={() => fileInputRefs.current[item.id]?.click()}
                                   size="sm"
                                   variant="default"
                                   className="w-full"
                                 >
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  Generate
+                                  <Upload className="h-4 w-4 mr-1" />
+                                  Upload
                                 </Button>
                               )}
-                            </TableCell>
-                            <TableCell
-                              className="sticky-right right-[100px] z-10 text-center"
-                              style={{ right: "100px" }}
-                            >
-                              <Checkbox
-                                checked={item.invoiceSent}
-                                onCheckedChange={(checked) => toggleInvoiceSent(item.id, checked as boolean)}
-                                disabled={!item.invoiceGenerated}
-                              />
                             </TableCell>
                             <TableCell className="sticky-right right-0 z-10 text-center" style={{ right: "0px" }}>
                               <Checkbox
                                 checked={item.collectionReceived}
                                 onCheckedChange={(checked) => toggleCollection(item.id, checked as boolean)}
-                                disabled={!item.invoiceSent}
+                                disabled={!item.fileUploaded} // Disabled until file is uploaded
                               />
                             </TableCell>
                           </TableRow>
@@ -1321,14 +1245,14 @@ Terms: ${item.terms}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{totalInvoices}</div>
-                  <p className="text-xs text-muted-foreground">{invoicesGenerated} generated</p>
+                  <p className="text-xs text-muted-foreground">{filesUploaded} uploaded</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <IndianRupee className="h-4 w-4 text-muted-foreground" /> {/* Changed to IndianRupee */}
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">₹{totalAmount.toLocaleString()}</div>
@@ -1367,14 +1291,14 @@ Terms: ${item.terms}
                   <CardTitle>Invoice Status Distribution</CardTitle>
                 </CardHeader>
                 <CardContent className="p-2">
-                  <ChartContainer config={{}} className="h-[300px]">
+                  <ChartContainer config={{}} className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={invoiceStatusData}
                           cx="50%"
                           cy="50%"
-                          outerRadius={80}
+                          outerRadius={120}
                           dataKey="value"
                           label={({ name, value }) => `${name}: ${value}`}
                         >
@@ -1419,9 +1343,7 @@ Terms: ${item.terms}
             <Card>
               <CardHeader>
                 <CardTitle>Theater Final Share View</CardTitle>
-                <CardDescription>
-            
-                </CardDescription>
+                <CardDescription></CardDescription>
 
                 {/* Filters for Map */}
                 <div className="flex items-center gap-4 pt-4">
