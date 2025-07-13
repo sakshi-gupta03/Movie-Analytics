@@ -57,7 +57,7 @@ export function Filters({ filters, onFiltersChange, onReset }: FiltersProps) {
   <CardContent>
     <div className="flex flex-wrap items-end gap-4">
       <div className="space-y-2 min-w-[180px]">
-        <label className="text-sm font-medium">Movie</label>
+        <label className="text-sm font-medium">Movies</label>
         <Select value={filters.movieId} onValueChange={(value) => onFiltersChange({ movieId: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Select movie" />

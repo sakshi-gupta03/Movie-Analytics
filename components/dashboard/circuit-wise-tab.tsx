@@ -378,12 +378,7 @@ export function CircuitWiseTab({ filters }: CircuitWiseTabProps) {
 
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Users className="h-4 w-4 text-blue-600 mr-2" />
-                      <h4 className="font-medium text-blue-800">Best Occupancy</h4>
                     </div>
-                    <p className="text-sm text-blue-600">
-                      {circuitData.sort((a, b) => b.avgOccupancy - a.avgOccupancy)[0]?.name} has highest occupancy rate
-                    </p>
                   </div>
 
                   <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
@@ -413,12 +408,7 @@ export function CircuitWiseTab({ filters }: CircuitWiseTabProps) {
                   {circuitData.some((circuit) => circuit.avgOccupancy < 60) && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex items-center mb-2">
-                        <TrendingDown className="h-4 w-4 text-red-600 mr-2" />
-                        <h4 className="font-medium text-red-800">Improvement Needed</h4>
                       </div>
-                      <p className="text-sm text-red-600">
-                        Some circuits have occupancy below 60% - consider optimization strategies
-                      </p>
                     </div>
                   )}
                 </>

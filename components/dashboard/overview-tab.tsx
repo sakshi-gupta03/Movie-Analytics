@@ -186,11 +186,12 @@ export function OverviewTab({ filters }: OverviewTabProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            {/* Removed Avg Occupancy title */}
+            <CardTitle className="text-sm font-medium">Avg Occupancy</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {/* Removed Avg Occupancy value */}
+            <div className="text-2xl font-bold">{avgOccupancy.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">Theater utilization</p>
           </CardContent>
         </Card>
@@ -202,7 +203,7 @@ export function OverviewTab({ filters }: OverviewTabProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Performance Trend Over Time
+              Gross Box Office Collection
               {filters.weekNumbers.length > 0 && (
                 <Badge variant="outline" className="ml-2">
                   Week{filters.weekNumbers.length > 1 ? "s" : ""} {filters.weekNumbers.join(", ")}
@@ -291,7 +292,6 @@ export function OverviewTab({ filters }: OverviewTabProps) {
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center mb-2">
                       <Target className="h-4 w-4 text-green-600 mr-2" />
-                      <h4 className="font-medium text-green-800">Occupancy Rate</h4>
                     </div>
                     <p className="text-sm text-green-600">
                       {/* Removed average occupancy text */}

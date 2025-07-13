@@ -44,7 +44,7 @@ const menuItems = [
     id: "reporting",
   },
   {
-    title: "Invoicing",
+    title: "Revenue & Invoicing",
     icon: Receipt,
     id: "invoicing",
   },
