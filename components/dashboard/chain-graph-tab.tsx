@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts"
 import type { FilterState } from "@/lib/types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react"
 
 interface ChainGraphTabProps {
   filters: FilterState
 }
 
-// Generate time-based data for chains
-const generateChainData = (filters: FilterState) => {
+// Generate time-based data for chains and all metrics
+const generateChainData = (filters: FilterState, metric: string) => {
   const chains = [
     "PVR Cinemas",
     "INOX Leisure",
@@ -32,14 +34,16 @@ const generateChainData = (filters: FilterState) => {
 
   return timePeriods.map((period) => {
     const dataPoint: any = { period }
-
     chains.slice(0, 6).forEach((chain) => {
-      // Generate realistic performance data
-      const baseValue = Math.random() * 80 + 20
-      const trend = Math.sin((timePeriods.indexOf(period) / timePeriods.length) * Math.PI * 2) * 15
-      dataPoint[chain] = Math.max(10, Math.round(baseValue + trend))
+      // Generate realistic performance data for each metric
+      let baseValue = Math.random() * 80 + 20
+      let trend = Math.sin((timePeriods.indexOf(period) / timePeriods.length) * Math.PI * 2) * 15
+      let value = Math.max(10, Math.round(baseValue + trend))
+      if (metric === "collection") value = Math.round((baseValue + trend) * 10000)
+      if (metric === "shows") value = Math.round((baseValue + trend) / 2)
+      if (metric === "audience") value = Math.round((baseValue + trend) * 100)
+      dataPoint[chain] = value
     })
-
     return dataPoint
   })
 }
@@ -54,7 +58,8 @@ const chartConfig = {
 }
 
 export function ChainGraphTab({ filters }: ChainGraphTabProps) {
-  const data = generateChainData(filters)
+  const [selectedMetric, setSelectedMetric] = useState<string>("collection")
+  const data = generateChainData(filters, selectedMetric)
   const chains = Object.keys(chartConfig)
 
   // Calculate insights
@@ -72,8 +77,29 @@ export function ChainGraphTab({ filters }: ChainGraphTabProps) {
 
   const timeLabel = filters.weekNumbers.length === 1 ? "Daily" : "Weekly"
 
+  const metricOptions = [
+    { value: "collection", label: "Collection" },
+    { value: "shows", label: "Shows" },
+    { value: "audience", label: "Audience" },
+  ]
+
+  const yAxisLabel = metricOptions.find(opt => opt.value === selectedMetric)?.label || "Occupancy %"
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-end mb-2">
+        <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select metric" />
+          </SelectTrigger>
+          <SelectContent>
+            {metricOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -84,14 +110,7 @@ export function ChainGraphTab({ filters }: ChainGraphTabProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Occupancy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">{avgOccupancy}%</div>
-          </CardContent>
-        </Card>
+        {/* Removed Avg Occupancy card */}
 
         <Card>
           <CardHeader className="pb-2">
@@ -117,7 +136,7 @@ export function ChainGraphTab({ filters }: ChainGraphTabProps) {
                 <YAxis
                   className="text-xs"
                   tick={{ fontSize: 12 }}
-                  label={{ value: "Occupancy %", angle: -90, position: "insideLeft" }}
+                  label={{ value: yAxisLabel, angle: -90, position: "insideLeft" }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Legend />

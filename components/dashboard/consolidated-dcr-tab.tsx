@@ -216,7 +216,7 @@ export function ConsolidatedDCRTab({ filters }: ConsolidatedDCRTabProps) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 {isDayWiseView ? <CalendarDays className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
-                Consolidated DCR Report
+                Collection Report
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 {isDayWiseView

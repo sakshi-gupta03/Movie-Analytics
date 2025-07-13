@@ -27,14 +27,9 @@ const circuitOptions = [
   { value: "saurashtra", label: "Saurashtra" },
 ]
 
-const chainOptions = [
-  { value: "pvr", label: "PVR Cinemas" },
-  { value: "inox", label: "INOX Leisure" },
-  { value: "cinepolis", label: "Cinepolis" },
-  { value: "carnival", label: "Carnival Cinemas" },
-  { value: "miraj", label: "Miraj Cinemas" },
-  { value: "fun", label: "Fun Cinemas" },
-]
+import { chains } from "@/lib/actual-data"
+
+const chainOptions = chains.map(chain => ({ value: chain.id, label: chain.name }))
 
 const theaterTypeOptions = [
   { value: "national-chain-multiplex", label: "National Chain Multiplex" },
@@ -58,7 +53,6 @@ export function Filters({ filters, onFiltersChange, onReset }: FiltersProps) {
   return (
    <Card>
   <CardHeader>
-    <CardTitle className="text-lg font-semibold">Filters</CardTitle>
   </CardHeader>
   <CardContent>
     <div className="flex flex-wrap items-end gap-4">

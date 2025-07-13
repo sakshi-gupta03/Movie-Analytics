@@ -37,7 +37,7 @@ export function DashboardTabs({ filters }: DashboardTabsProps) {
           value="dcr"
           className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all whitespace-nowrap text-sm font-medium"
         >
-          Consolidated DCR
+          Collection Report
         </TabsTrigger>
       </TabsList>
 

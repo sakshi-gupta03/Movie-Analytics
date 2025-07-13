@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { TrendingUp, Users, Film, DollarSign, Calendar, Target } from "lucide-react"
+import { TrendingUp, Users, Film, DollarSign, Calendar, Target , IndianRupeeIcon} from "lucide-react"
 import type { FilterState } from "@/lib/types"
 import { generatePerformanceData, chains, movies } from "@/lib/actual-data"
 
@@ -121,7 +121,7 @@ export function OverviewTab({ filters }: OverviewTabProps) {
           value: totalCollection,
           formatter: (value: number) => `₹${value.toLocaleString()}`,
           color: "#3b82f6",
-          icon: DollarSign,
+          icon: IndianRupeeIcon,
           dataKey: "collection",
         }
       case "shows":
@@ -154,7 +154,7 @@ export function OverviewTab({ filters }: OverviewTabProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <IndianRupeeIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹{totalCollection.toLocaleString()}</div>
@@ -186,11 +186,11 @@ export function OverviewTab({ filters }: OverviewTabProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Occupancy</CardTitle>
+            {/* Removed Avg Occupancy title */}
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{avgOccupancy.toFixed(1)}%</div>
+            {/* Removed Avg Occupancy value */}
             <p className="text-xs text-muted-foreground">Theater utilization</p>
           </CardContent>
         </Card>
@@ -294,7 +294,7 @@ export function OverviewTab({ filters }: OverviewTabProps) {
                       <h4 className="font-medium text-green-800">Occupancy Rate</h4>
                     </div>
                     <p className="text-sm text-green-600">
-                      Average occupancy of {avgOccupancy.toFixed(1)}% across all shows
+                      {/* Removed average occupancy text */}
                     </p>
                   </div>
 

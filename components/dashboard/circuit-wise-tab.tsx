@@ -347,7 +347,7 @@ export function CircuitWiseTab({ filters }: CircuitWiseTabProps) {
                       <div className="text-right">
                         <p className="font-bold">{metricDetails.formatter(circuit[selectedMetric])}</p>
                         <Badge variant="secondary" className="text-xs mt-1">
-                          {circuit.avgOccupancy.toFixed(1)}% avg occupancy
+                          {/* Removed avg occupancy text */}
                         </Badge>
                       </div>
                     </div>
